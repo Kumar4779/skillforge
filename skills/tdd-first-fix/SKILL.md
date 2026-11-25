@@ -1,6 +1,48 @@
 ---
 name: tdd-first-fix
-description: Fix a bug by first writing a failing test that reproduces it, then making the smallest change that turns it green.
+description: Use when fixing a bug, regression, or GitHub issue in a codebase that has a test suite.
 ---
 
-Status: not yet written.
+# tdd-first-fix
+
+## When to use
+
+Use this skill for bug fixes, regressions, and issue reports in a codebase with a working test suite.
+
+Do not use it for:
+
+- Docs-only or config-only changes.
+- A repo with no test framework. In that case, say plainly that the repo has no test framework and stop. Do not fake TDD.
+
+## Steps
+
+1. **Reproduce.** Read the issue and reproduce the failure before changing anything.
+2. **Write one test.** Write ONE new test that captures the bug: the smallest test that fails for the right reason.
+3. **Confirm it fails correctly.** Run the new test and confirm it fails for the expected reason, not because of a typo, import error, or broken setup.
+4. **Make the smallest fix.** Make the smallest code change that could make the test pass.
+5. **Confirm it passes.** Run the new test. It must pass.
+6. **Check for regressions.** Run the affected module's existing tests. There must be no regressions.
+7. **Report.** State the test you wrote, the change you made, and the actual test results.
+
+## Guardrails
+
+These are hard rules:
+
+- Never edit the new test after step 3 to make it pass.
+- Never edit existing tests.
+- Make the smallest change only. No unrelated refactors.
+- Never touch files outside the repo.
+- If you cannot reproduce the bug, stop and report that. Do not guess a fix.
+
+## Failure modes
+
+- **The test passes immediately.** It does not capture the bug. Rewrite the test.
+- **The test fails for the wrong reason.** Fix the test setup, not the code.
+- **The fix breaks other tests.** The change is wrong or too broad. Narrow it.
+- **No test framework exists.** Stop and report.
+
+## Done when
+
+- The new test failed before the change and passes after it.
+- The affected test suite is green.
+- The report lists the test, the change, and the results.

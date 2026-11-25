@@ -25,7 +25,7 @@ LEARNING.md  Concepts checklist
 
 | Skill | Status |
 |---|---|
-| `tdd-first-fix` | Not yet written |
+| `tdd-first-fix` | Written — not yet evaled |
 | `pr-babysit` | Not yet written |
 | `swarm-review` | Not yet written |
 | `verify-before-merge` | Not yet written |
