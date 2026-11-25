@@ -1,0 +1,10 @@
+diff --git a/textkit/durations.py b/textkit/durations.py
+index b667213..538ecbb 100644
+--- a/textkit/durations.py
++++ b/textkit/durations.py
+@@ -12,4 +12,4 @@ def parse_duration(s: str) -> int:
+     if not text or match is None:
+         raise ValueError(f"invalid duration: {s!r}")
+     hours, minutes, seconds = (int(group) if group else 0 for group in match.groups())
+-    return hours * 3600 + minutes * 60
++    return hours * 3600 + minutes * 60 + seconds
