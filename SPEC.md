@@ -58,3 +58,46 @@ Skills must not depend on a specific agent's proprietary features unless that de
 - Skill content
 - Harness implementation
 - Installers
+
+## 7. The 25-skill roadmap
+
+### 7.1 Counting rule
+- A skill counts toward the 25 only when it is **written in full and holds a first eval score**.
+- Stubs never count.
+- The README leaderboard shows each skill's true status: **stub**, **written**, **evaled**, or **proven**.
+
+### 7.2 Wave 1 — Core 5 (skills 1–5)
+1. `tdd-first-fix`
+2. `pr-babysit`
+3. `swarm-review`
+4. `verify-before-merge`
+5. `investigate`
+
+### 7.3 Wave 2 — Engineering depth (skills 6–15)
+6. `bisect-regression`
+7. `refactor-safely`
+8. `write-tests`
+9. `dependency-upgrade`
+10. `migration-writer`
+11. `perf-hunt`
+12. `security-pass`
+13. `flaky-test-hunter`
+14. `docs-from-code`
+15. `release-notes`
+
+### 7.4 Wave 3 — Agent operations (skills 16–25)
+16. `eval-writer`
+17. `skill-smith`
+18. `mcp-server-check`
+19. `permission-check`
+20. `citation-verifier`
+21. `morning-brief`
+22. `meeting-followup`
+23. `cost-ledger`
+24. `handoff-writer`
+25. `ship`
+
+### 7.5 Gates
+- **Wave 2** writing starts only when the Core 5 are written and skill 1 has a real eval score.
+- **Wave 3** starts when Wave 2's first skills are evaled.
+- Folders are created wave by wave as skills are written. No empty folders are created ahead of the work.
