@@ -1,6 +1,6 @@
 # Harness
 
-**Status:** Grader self-tested under grader rule v2 (line-aware). Disqualification covers changes to existing test lines, hidden tests, and test configuration; adding new tests is allowed. Live A/B smoke runs recorded: `harness/results/task-001-ab-smoke.json` (rule v1 — both arms disqualified for writing tests, which v2 corrects) and `harness/results/task-001-ab-smoke-v2.json` (rule v2). Both are n=1 per condition: pipeline proof only, not evidence the skill works. First scored run recorded for `tdd-first-fix`: `harness/results/tdd-first-fix-scored-v1.json` (3 tasks x 3 trials per arm; small sample). Further results will be published under `harness/results/`.
+**Status:** Grader self-tested under grader rule v2 (line-aware). Disqualification covers changes to existing test lines, hidden tests, and test configuration; adding new tests is allowed. Live A/B smoke runs recorded: `harness/results/task-001-ab-smoke.json` (rule v1 — both arms disqualified for writing tests, which v2 corrects) and `harness/results/task-001-ab-smoke-v2.json` (rule v2). Both are n=1 per condition: pipeline proof only, not evidence the skill works. Scored runs recorded for `tdd-first-fix`: v1 `harness/results/tdd-first-fix-scored-v1.json` and v2 (after one skill revision) `harness/results/tdd-first-fix-scored-v2.json`, each 3 tasks x 3 trials per arm; small sample. `--scored` writes to the first unused `<skill>-scored-vN.json` unless `--out` is given. Further results will be published under `harness/results/`.
 
 ## What exists
 

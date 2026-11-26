@@ -2,7 +2,7 @@
 
 SkillForge is a portable library of `SKILL.md` files for coding agents, paired with a blind-eval harness that measures whether each skill actually helps.
 
-**Status:** Foundation — no skills are written or evaled yet; scores will be published here when they exist.
+**Status:** One skill (`tdd-first-fix`) is written and evaled: a first scored run (v1) and a scored re-run after one revision (v2) are recorded below. The other four planned skills are not yet written.
 
 ## What it is
 
@@ -25,7 +25,7 @@ LEARNING.md  Concepts checklist
 
 | Skill | Status |
 |---|---|
-| `tdd-first-fix` | Evaled — first score |
+| `tdd-first-fix` | Evaled — v2 scored |
 | `pr-babysit` | Not yet written |
 | `swarm-review` | Not yet written |
 | `verify-before-merge` | Not yet written |
@@ -35,24 +35,29 @@ See [SPEC.md](SPEC.md) for the design and evaluation method.
 
 ## Eval results
 
-### `tdd-first-fix` — first scored run
+### `tdd-first-fix` — scored runs
 
-Source: [`harness/results/tdd-first-fix-scored-v1.json`](harness/results/tdd-first-fix-scored-v1.json). Grader rule v2 (line-aware). A = no skill, B = with `tdd-first-fix`.
+A = no skill, B = with `tdd-first-fix`. Grader rule v2 (line-aware). Same three tasks, prompt, permissions, and timeout in both runs; only the skill text changed between v1 and v2 (see [SPEC.md §8](SPEC.md#8-revision-log)).
 
-| Task | A passes | B passes |
-|---|---|---|
-| `task-001` | 3/3 | 3/3 |
-| `task-002` | 3/3 | 0/3 |
-| `task-003` | 3/3 | 3/3 |
+- v1: [`harness/results/tdd-first-fix-scored-v1.json`](harness/results/tdd-first-fix-scored-v1.json)
+- v2: [`harness/results/tdd-first-fix-scored-v2.json`](harness/results/tdd-first-fix-scored-v2.json)
 
-| Overall | A (no skill) | B (with skill) |
-|---|---|---|
-| Pass rate | 9/9 (100%) | 6/9 (67%) |
-| Tasks passed in all 3 trials (pass^k) | 3/3 | 2/3 |
-| Total cost | $0.9548 | $1.0991 |
-| Cost per solved task | $0.1061 | $0.1832 |
+| Task | v1 A | v1 B | v2 A | v2 B |
+|---|---|---|---|---|
+| `task-001` | 3/3 | 3/3 | 3/3 | 3/3 |
+| `task-002` | 3/3 | 0/3 | 3/3 | 3/3 |
+| `task-003` | 3/3 | 3/3 | 3/3 | 3/3 |
+
+| Overall | v1 A | v1 B | v2 A | v2 B |
+|---|---|---|---|---|
+| Pass rate | 9/9 (100%) | 6/9 (67%) | 9/9 (100%) | 9/9 (100%) |
+| Tasks passed in all 3 trials (pass^k) | 3/3 | 2/3 | 3/3 | 3/3 |
+| Total cost | $0.9548 | $1.0991 | $0.9028 | $1.1192 |
+| Cost per solved task | $0.1061 | $0.1832 | $0.1003 | $0.1244 |
 
 3 tasks x 3 trials per arm. Small sample — directional, not conclusive. Both arms also have the host's built-in skills available.
+
+v2 was revised in response to the v1 `task-002` failures, so `task-002` is not held out for v2.
 
 ## License
 

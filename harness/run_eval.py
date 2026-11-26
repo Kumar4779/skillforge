@@ -458,6 +458,14 @@ def summarize_scored(records: list[dict]) -> dict:
     return {"per_task": per_task, "overall": overall}
 
 
+def _next_scored_path() -> Path:
+    """First unused harness/results/<skill>-scored-vN.json, so earlier runs are never overwritten."""
+    version = 1
+    while (path := HARNESS_DIR / "results" / f"{SKILL_NAME}-scored-v{version}.json").exists():
+        version += 1
+    return path
+
+
 def run_scored(trials: int) -> list[dict]:
     records = []
     for task_dir in task_dirs():
@@ -489,7 +497,7 @@ def main() -> int:
         return self_test()
     if args.scored:
         records = run_scored(args.trials)
-        out = Path(args.out) if args.out else HARNESS_DIR / "results" / f"{SKILL_NAME}-scored-v1.json"
+        out = Path(args.out) if args.out else _next_scored_path()
         results = {
             "note": SCORED_NOTE,
             "skill": SKILL_NAME,
