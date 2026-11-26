@@ -68,7 +68,7 @@ Skills must not depend on a specific agent's proprietary features unless that de
 - Harness implementation
 - Installers
 
-## 7. The 25-skill roadmap
+## 7. The roadmap (about 41 skills)
 
 ### 7.1 Counting rule
 - A skill counts toward the 25 only when it is **written in full and holds a first eval score**.

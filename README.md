@@ -31,7 +31,7 @@ LEARNING.md  Concepts checklist
 | `verify-before-merge` | Not yet written |
 | `investigate` | Not yet written |
 
-Roadmap: about 41 skills mapped (25 in Waves 1–3, about 10 principles, 6 Wave 4 product skills; [SPEC §7](SPEC.md#7-the-25-skill-roadmap)). Written: 3. Counted: 1. A skill is counted when it is written in full and holds a first eval score; principle skills are not counted until a way to measure them exists.
+Roadmap: about 41 skills mapped (25 in Waves 1–3, about 10 principles, 6 Wave 4 product skills; [SPEC §7](SPEC.md#7-the-roadmap-about-41-skills)). Written: 3. Counted: 1. A skill is counted when it is written in full and holds a first eval score; principle skills are not counted until a way to measure them exists.
 
 See [SPEC.md](SPEC.md) for the design and evaluation method.
 
