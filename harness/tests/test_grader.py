@@ -6,8 +6,10 @@ import pytest
 HARNESS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
-from run_eval import TASK_001, grade, parse_patch, task_001_cases  # noqa: E402
+from run_eval import TASK_001, grade, make_patch, parse_patch, task_001_cases  # noqa: E402
 
+FIXTURES = HARNESS_DIR / "fixtures"
+TASK_DIRS = sorted(path for path in FIXTURES.iterdir() if path.is_dir())
 CASES = {name: (patch, expected) for name, patch, expected in task_001_cases()}
 
 
@@ -110,3 +112,26 @@ def test_record_shape():
     record = grade(TASK_001, "")
     assert set(record) == {"passed", "disqualified", "reason", "duration_s"}
     assert isinstance(record["duration_s"], float)
+
+
+@pytest.mark.parametrize("task_dir", TASK_DIRS, ids=lambda path: path.name)
+def test_every_task_gold_passes_and_empty_fails(task_dir):
+    gold = grade(task_dir, (task_dir / "gold_patch.diff").read_text())
+    assert (gold["passed"], gold["disqualified"]) == (True, False), gold["reason"]
+    empty = grade(task_dir, "")
+    assert (empty["passed"], empty["disqualified"]) == (False, False), empty["reason"]
+
+
+def test_task_002_tempting_in_place_sort_fix_fails():
+    task_dir = FIXTURES / "task-002"
+    stats = (task_dir / "project" / "statkit" / "stats.py").read_text()
+    tempting = stats.replace(
+        "    return values[len(values) // 2]\n",
+        "    middle = len(values) // 2\n"
+        "    if len(values) % 2:\n"
+        "        return values[middle]\n"
+        "    return (values[middle - 1] + values[middle]) / 2\n",
+    )
+    record = grade(task_dir, make_patch(task_dir, {"statkit/stats.py": tempting}))
+    assert (record["passed"], record["disqualified"]) == (False, False)
+    assert "1 failed" in record["reason"]

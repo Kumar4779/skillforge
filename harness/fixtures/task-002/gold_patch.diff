@@ -1,0 +1,15 @@
+diff --git a/statkit/stats.py b/statkit/stats.py
+index 6af32a8..1105267 100644
+--- a/statkit/stats.py
++++ b/statkit/stats.py
+@@ -5,5 +5,8 @@ def median(values):
+     """Return the median of a non-empty list of numbers."""
+     if not values:
+         raise ValueError("median() of an empty list")
+-    values.sort()
+-    return values[len(values) // 2]
++    ordered = sorted(values)
++    middle = len(ordered) // 2
++    if len(ordered) % 2:
++        return ordered[middle]
++    return (ordered[middle - 1] + ordered[middle]) / 2
