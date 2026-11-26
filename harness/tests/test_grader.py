@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 
@@ -6,6 +7,7 @@ import pytest
 HARNESS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
+import run_eval  # noqa: E402
 from run_eval import TASK_001, grade, make_patch, parse_patch, summarize_scored, task_001_cases  # noqa: E402
 
 FIXTURES = HARNESS_DIR / "fixtures"
@@ -163,3 +165,26 @@ def test_summarize_scored_counts_pass_hat_k_and_cost_per_solve():
     assert (overall_b["passes"], overall_b["trials"], overall_b["tasks_with_pass_hat_k"]) == (5, 6, 1)
     assert overall_b["total_cost_usd"] == pytest.approx(1.8)
     assert overall_b["cost_per_solved_task_usd"] == pytest.approx(0.36)
+
+
+def test_skill_version_records_commit_and_installed_file_hash(tmp_path):
+    workspace = tmp_path / "workspace"
+    run_eval._prepare_workspace(TASK_001, workspace, with_skill=True)
+    installed = workspace / ".claude" / "skills" / run_eval.SKILL_NAME / "SKILL.md"
+    sha = run_eval.file_sha256_12(installed)
+    records = [{"condition": "A", "skill_sha256_12": None}, {"condition": "B", "skill_sha256_12": sha}]
+
+    version = run_eval.skill_version(records)
+
+    assert set(version) == {"commit", "sha256_12", "uncommitted_changes"}
+    assert re.fullmatch(r"[0-9a-f]{7,40}", version["commit"])
+    assert version["sha256_12"] == sha
+    assert re.fullmatch(r"[0-9a-f]{12}", sha)
+    assert sha == run_eval.file_sha256_12(run_eval.REPO_DIR / "skills" / run_eval.SKILL_NAME / "SKILL.md")
+    assert isinstance(version["uncommitted_changes"], bool)
+
+
+def test_skill_version_rejects_mixed_skill_texts():
+    records = [{"condition": "B", "skill_sha256_12": "aaaaaaaaaaaa"}, {"condition": "B", "skill_sha256_12": "bbbbbbbbbbbb"}]
+    with pytest.raises(RuntimeError, match="different SKILL.md texts"):
+        run_eval.skill_version(records)

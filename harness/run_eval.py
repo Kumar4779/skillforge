@@ -24,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -363,6 +364,8 @@ def run_trial(task_dir: Path, condition: str, trial: int) -> dict:
     with tempfile.TemporaryDirectory(prefix=f"skillforge-{condition}-") as tmp:
         workspace = Path(tmp) / "workspace"
         _prepare_workspace(task_dir, workspace, with_skill=(condition == "B"))
+        installed_skill = workspace / ".claude" / "skills" / SKILL_NAME / "SKILL.md"
+        skill_sha256_12 = file_sha256_12(installed_skill) if condition == "B" else None
         # Strip the parent Claude Code session's variables so the child starts clean.
         env = {k: v for k, v in os.environ.items() if not k.startswith("CLAUDE")}
         start = time.monotonic()
@@ -383,6 +386,7 @@ def run_trial(task_dir: Path, condition: str, trial: int) -> dict:
         "grader_rule": GRADER_RULE,
         "condition": condition,
         "skill": SKILL_NAME if condition == "B" else None,
+        "skill_sha256_12": skill_sha256_12,
         "trial": trial,
         "passed": graded["passed"],
         "disqualified": graded["disqualified"],
@@ -458,6 +462,36 @@ def summarize_scored(records: list[dict]) -> dict:
     return {"per_task": per_task, "overall": overall}
 
 
+def file_sha256_12(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+
+
+def skill_version(records: list[dict]) -> dict:
+    """Identify the skill text a scored run used.
+
+    commit: short hash of the last commit that touched skills/<skill>/SKILL.md.
+    sha256_12: hash of the SKILL.md actually installed in the B workspaces.
+    uncommitted_changes: True if SKILL.md differed from that commit at write time,
+    in which case the commit alone does not describe the text that ran.
+    """
+    relative = f"skills/{SKILL_NAME}/SKILL.md"
+    commit = subprocess.run(
+        ["git", "log", "-1", "--format=%h", "--", relative],
+        cwd=REPO_DIR, capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    dirty = subprocess.run(
+        ["git", "diff", "--quiet", "HEAD", "--", relative], cwd=REPO_DIR,
+    ).returncode != 0
+    hashes = sorted({r["skill_sha256_12"] for r in records if r["condition"] == "B" and r.get("skill_sha256_12")})
+    if len(hashes) > 1:
+        raise RuntimeError(f"B workspaces ran different SKILL.md texts: {hashes}")
+    return {
+        "commit": commit or None,
+        "sha256_12": hashes[0] if hashes else None,
+        "uncommitted_changes": dirty,
+    }
+
+
 def _next_scored_path() -> Path:
     """First unused harness/results/<skill>-scored-vN.json, so earlier runs are never overwritten."""
     version = 1
@@ -501,6 +535,7 @@ def main() -> int:
         results = {
             "note": SCORED_NOTE,
             "skill": SKILL_NAME,
+            "skill_version": skill_version(records),
             "grader_rule": GRADER_RULE,
             "tasks": [path.name for path in task_dirs()],
             "trials_per_condition": args.trials,
