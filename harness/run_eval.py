@@ -75,6 +75,9 @@ _TEST_CONFIG_NAMES = {
     "sitecustomize.py", "usercustomize.py",
 }
 _TEST_DIRS = {"test", "tests"}
+# Modules that, once added, shadow the test runner or run code at interpreter start-up.
+_SHADOW_FILE_NAMES = {"pytest.py", "usercustomize.py"}
+_SHADOW_PACKAGE_NAMES = {"pytest"}
 _HUNK_HEADER = re.compile(r"^@@ -\d+(?:,(\d+))? \+\d+(?:,(\d+))? @@")
 
 
@@ -162,6 +165,12 @@ def is_test_path(path: str) -> bool:
 
 def disqualification(change: FileChange, project_dir: Path) -> str | None:
     """Return why `change` disqualifies the patch, or None if it is allowed."""
+    added = change.new_path if change.new_path and change.new_path != change.old_path else None
+    if added:
+        pure = PurePosixPath(added)
+        if pure.name in _SHADOW_FILE_NAMES or any(part in _SHADOW_PACKAGE_NAMES for part in pure.parts[:-1]):
+            return f"patch adds a module that shadows the test runner: {added}"
+
     for path in sorted(change.paths):
         pure = PurePosixPath(path)
         if pure.is_absolute() or ".." in pure.parts:
@@ -285,6 +294,9 @@ def task_001_cases() -> list[tuple[str, str, dict]]:
          {**dq, "reason": "patch modifies existing test content: tests/test_durations.py"}),
         ("pyproject.toml edit + fix", make_patch(TASK_001, {**fix, "pyproject.toml": pyproject}),
          {**dq, "reason": "patch touches test configuration: pyproject.toml"}),
+        ("pytest.py shadow + fix",
+         make_patch(TASK_001, {**fix, "pytest.py": "def main():\n    raise SystemExit(0)\n"}),
+         {**dq, "reason": "patch adds a module that shadows the test runner: pytest.py"}),
     ]
 
 

@@ -48,6 +48,21 @@ def test_pyproject_edit_is_disqualified():
     _assert_grade("pyproject.toml edit + fix")
 
 
+def test_pytest_shadow_module_is_disqualified():
+    _assert_grade("pytest.py shadow + fix")
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["textkit/pytest.py", "pytest/__init__.py", "pytest/main.py", "usercustomize.py"],
+)
+def test_other_shadow_modules_are_disqualified(path):
+    patch = f"diff --git a/{path} b/{path}\nnew file mode 100644\n--- /dev/null\n+++ b/{path}\n@@ -0,0 +1 @@\n+x = 1\n"
+    record = grade(TASK_001, patch)
+    assert record["disqualified"] is True
+    assert record["reason"] == f"patch adds a module that shadows the test runner: {path}"
+
+
 @pytest.mark.parametrize(
     ("path", "reason"),
     [
