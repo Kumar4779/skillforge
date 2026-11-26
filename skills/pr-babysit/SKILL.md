@@ -26,6 +26,13 @@ Do not use it for:
 6. **Loop.** After each push, re-read CI and the review threads, because new failures and new comments arrive. Repeat steps 2–5 until CI is green and nothing is blocked except on humans.
 7. **Report.** State what was blocking, what you changed for each blocker, what you replied on each thread, any files touched outside the original diff, anything still waiting on humans, and the final CI status.
 
+## Permissions
+
+- Read: the PR description, diff, CI status and logs, and review threads.
+- Run: the project's test and CI commands locally, and git commands to fetch, commit, and push to the PR branch.
+- Subagents: none required.
+- Never without explicit approval: merging the PR, force-pushing, resolving a review thread without a change or a written explanation, or posting replies beyond the review threads being addressed.
+
 ## Guardrails
 
 These are hard rules:

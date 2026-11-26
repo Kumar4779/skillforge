@@ -152,6 +152,8 @@ Patterns below were learned by reading the primary sources listed in §9.4 for s
 
 Frontmatter: `name` (lowercase, hyphenated, matching the folder) and a trigger-first `description`. Body sections, in order: **When to use** (with not-cases), **Steps**, **Permissions**, **Guardrails**, **Failure modes**, **Done when**. Bundled files (`scripts/`, `references/`), when present, are each referenced from the body with when to read or run them.
 
+**Exemptions and backfills.** `tdd-first-fix` v2 (commit `e088f61`, SKILL.md sha256 `0f89bd5f5e29`) predates the Permissions-section standard and is intentionally not backfilled, so the closed eval's record (§8) keeps pointing at the exact text that was tested. The section will be added with any future behavioural revision, which will carry its own version and its own eval. `pr-babysit` was backfilled with a Permissions section when the standard was adopted, because it had not been evaled.
+
 ### 9.4 Sources and licenses
 
 | Source | What was read | License, as stated in the repo |
