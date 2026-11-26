@@ -2,7 +2,7 @@
 
 SkillForge is a portable library of `SKILL.md` files for coding agents, paired with a blind-eval harness that measures whether each skill actually helps.
 
-**Status:** One skill (`tdd-first-fix`) is written and evaled: a first scored run (v1) and a scored re-run after one revision (v2) are recorded below. The other four planned skills are not yet written.
+**Status:** One skill (`tdd-first-fix`) is written and evaled: a first scored run (v1), a scored re-run after one revision (v2), and a v2 run on a held-out task set are recorded below. The other four planned skills are not yet written.
 
 ## What it is
 
@@ -25,7 +25,7 @@ LEARNING.md  Concepts checklist
 
 | Skill | Status |
 |---|---|
-| `tdd-first-fix` | Evaled — v2 scored |
+| `tdd-first-fix` | Evaled — v2 scored; held-out run recorded |
 | `pr-babysit` | Not yet written |
 | `swarm-review` | Not yet written |
 | `verify-before-merge` | Not yet written |
@@ -58,6 +58,25 @@ A = no skill, B = with `tdd-first-fix`. Grader rule v2 (line-aware). Same three 
 3 tasks x 3 trials per arm. Small sample — directional, not conclusive. Both arms also have the host's built-in skills available.
 
 v2 was revised in response to the v1 `task-002` failures, so `task-002` is not held out for v2.
+
+### Held-out set (tasks 004-006)
+
+Source: [`harness/results/tdd-first-fix-heldout-v1.json`](harness/results/tdd-first-fix-heldout-v1.json). Skill version: commit `e088f61`, SKILL.md sha256 `0f89bd5f5e29` (v2). Grader rule v2 (line-aware). A different task set from the v1/v2 scorecard above; the numbers are not combined.
+
+| Task | A passes | B passes |
+|---|---|---|
+| `task-004` | 3/3 | 3/3 |
+| `task-005` | 3/3 | 3/3 |
+| `task-006` | 3/3 | 3/3 |
+
+| Overall | A (no skill) | B (with skill) |
+|---|---|---|
+| Pass rate | 9/9 (100%) | 9/9 (100%) |
+| Tasks passed in all 3 trials (pass^k) | 3/3 | 3/3 |
+| Total cost | $0.9370 | $1.1189 |
+| Cost per solved task | $0.1041 | $0.1243 |
+
+Held-out set: tasks 004-006 were built after tdd-first-fix v2 was frozen; the skill was never revised against these tasks. 3 tasks x 3 trials per arm. Small sample — directional, not conclusive. Both arms also have the host's built-in skills available.
 
 ## License
 
