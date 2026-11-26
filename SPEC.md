@@ -110,3 +110,11 @@ Skills must not depend on a specific agent's proprietary features unless that de
 - **Wave 2** writing starts only when the Core 5 are written and skill 1 has a real eval score.
 - **Wave 3** starts when Wave 2's first skills are evaled.
 - Folders are created wave by wave as skills are written. No empty folders are created ahead of the work.
+
+## 8. Revision log
+
+### `tdd-first-fix`
+
+- **v1 scored run** (`harness/results/tdd-first-fix-scored-v1.json`, 3 tasks x 3 trials per arm): A (no skill) 9/9, B (with skill) 6/9. All three B failures were on `task-002`. Mechanism: the smallest-change rule led the agent to keep the existing in-place `values.sort()`, which mutates the caller's list and fails the hidden no-mutation test. All three A runs replaced it with a sorted copy.
+- **v2 hypothesis:** carving contract-violating side effects out of the smallest-change rule (and pinning conventional input contracts in the failing test) recovers `task-002` without losing `task-001` or `task-003`.
+- **Held-out caveat:** v2 was revised in response to a `task-002` failure, so `task-002` is no longer held out for v2. A v2 gain on `task-002` shows the revision addresses the observed failure; it does not show generalization. That requires tasks not used in the revision.
