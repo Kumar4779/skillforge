@@ -18,6 +18,7 @@ Usage:
     python harness/run_eval.py --self-test
     python harness/run_eval.py TASK_DIR PATCH_FILE
     python harness/run_eval.py --run --task harness/fixtures/task-001 --trials 1
+    python harness/run_eval.py --scored --trials 3
 """
 
 from __future__ import annotations
@@ -378,6 +379,8 @@ def run_trial(task_dir: Path, condition: str, trial: int) -> dict:
 
     graded = grade(task_dir, diff)
     return {
+        "task": task_dir.name,
+        "grader_rule": GRADER_RULE,
         "condition": condition,
         "skill": SKILL_NAME if condition == "B" else None,
         "trial": trial,
@@ -409,12 +412,73 @@ def run_ab(task_dir: Path, trials: int) -> list[dict]:
     return records
 
 
+SCORED_NOTE = (
+    "3 tasks x 3 trials per arm. Small sample — directional, not conclusive. "
+    "Both arms also have the host's built-in skills available."
+)
+
+
+def task_dirs() -> list[Path]:
+    return sorted(path for path in (HARNESS_DIR / "fixtures").iterdir() if path.is_dir())
+
+
+def _arm_summary(records: list[dict]) -> dict:
+    passes = sum(record["passed"] for record in records)
+    costs = [record.get("total_cost_usd") for record in records]
+    total_cost = round(sum(cost or 0.0 for cost in costs), 6)
+    return {
+        "passes": passes,
+        "trials": len(records),
+        "pass_rate": round(passes / len(records), 4) if records else None,
+        "disqualified": sum(record["disqualified"] for record in records),
+        "timed_out": sum(record["agent_timed_out"] for record in records),
+        "total_cost_usd": total_cost,
+        "cost_per_solved_task_usd": round(total_cost / passes, 6) if passes else "no solves",
+        "runs_missing_cost": sum(cost is None for cost in costs),
+    }
+
+
+def summarize_scored(records: list[dict]) -> dict:
+    """Per-task and overall pass counts, pass^k, and cost per arm."""
+    tasks = sorted({record["task"] for record in records})
+    per_task = {}
+    for task in tasks:
+        per_task[task] = {}
+        for arm in ("A", "B"):
+            arm_records = [r for r in records if r["task"] == task and r["condition"] == arm]
+            summary = _arm_summary(arm_records)
+            summary["pass_hat_k"] = bool(arm_records) and summary["passes"] == summary["trials"]
+            per_task[task][arm] = summary
+    overall = {}
+    for arm in ("A", "B"):
+        summary = _arm_summary([r for r in records if r["condition"] == arm])
+        summary["tasks_with_pass_hat_k"] = sum(per_task[task][arm]["pass_hat_k"] for task in tasks)
+        summary["tasks"] = len(tasks)
+        overall[arm] = summary
+    return {"per_task": per_task, "overall": overall}
+
+
+def run_scored(trials: int) -> list[dict]:
+    records = []
+    for task_dir in task_dirs():
+        for trial in range(1, trials + 1):
+            for condition in ("A", "B"):
+                print(f"running {task_dir.name}, condition {condition}, trial {trial} ...", flush=True)
+                record = run_trial(task_dir, condition, trial)
+                print(json.dumps({k: v for k, v in record.items() if k not in ("diff", "skills_available")}),
+                      flush=True)
+                records.append(record)
+    return records
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--self-test", action="store_true", help="grade the built-in gold, empty, and test-edit patches")
     parser.add_argument("--run", action="store_true", help="run a live A/B with Claude Code headless")
+    parser.add_argument("--scored", action="store_true",
+                        help="run every task in harness/fixtures/, both arms, --trials each, and summarize")
     parser.add_argument("--task", help="task fixture directory for --run")
-    parser.add_argument("--trials", type=int, default=1, help="trials per condition for --run")
+    parser.add_argument("--trials", type=int, default=1, help="trials per condition for --run / --scored")
     parser.add_argument("--out", help="results JSON for --run (default: harness/results/<task>-ab-smoke.json "
                                       "below 3 trials, otherwise <task>-ab-n<trials>.json)")
     parser.add_argument("task_dir", nargs="?", help="task fixture directory")
@@ -423,6 +487,25 @@ def main() -> int:
 
     if args.self_test:
         return self_test()
+    if args.scored:
+        records = run_scored(args.trials)
+        out = Path(args.out) if args.out else HARNESS_DIR / "results" / f"{SKILL_NAME}-scored-v1.json"
+        results = {
+            "note": SCORED_NOTE,
+            "skill": SKILL_NAME,
+            "grader_rule": GRADER_RULE,
+            "tasks": [path.name for path in task_dirs()],
+            "trials_per_condition": args.trials,
+            "agent_command": AGENT_COMMAND,
+            "agent_timeout_s": AGENT_TIMEOUT_S,
+            "summary": summarize_scored(records),
+            "records": records,
+        }
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(results, indent=2) + "\n")
+        print(json.dumps(results["summary"], indent=2))
+        print(f"wrote {out}")
+        return 0
     if args.run:
         if not args.task:
             parser.error("--run needs --task")

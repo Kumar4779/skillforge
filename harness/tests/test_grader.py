@@ -6,7 +6,7 @@ import pytest
 HARNESS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
-from run_eval import TASK_001, grade, make_patch, parse_patch, task_001_cases  # noqa: E402
+from run_eval import TASK_001, grade, make_patch, parse_patch, summarize_scored, task_001_cases  # noqa: E402
 
 FIXTURES = HARNESS_DIR / "fixtures"
 TASK_DIRS = sorted(path for path in FIXTURES.iterdir() if path.is_dir())
@@ -135,3 +135,31 @@ def test_task_002_tempting_in_place_sort_fix_fails():
     record = grade(task_dir, make_patch(task_dir, {"statkit/stats.py": tempting}))
     assert (record["passed"], record["disqualified"]) == (False, False)
     assert "1 failed" in record["reason"]
+
+
+def _fake(task, condition, passed, cost, disqualified=False):
+    return {"task": task, "condition": condition, "passed": passed, "disqualified": disqualified,
+            "agent_timed_out": False, "total_cost_usd": cost}
+
+
+def test_summarize_scored_counts_pass_hat_k_and_cost_per_solve():
+    records = [
+        _fake("t1", "A", True, 0.1), _fake("t1", "A", True, 0.1), _fake("t1", "A", True, 0.1),
+        _fake("t1", "B", True, 0.2), _fake("t1", "B", False, 0.2, disqualified=True), _fake("t1", "B", True, 0.2),
+        _fake("t2", "A", False, 0.3), _fake("t2", "A", False, 0.3), _fake("t2", "A", False, None),
+        _fake("t2", "B", True, 0.4), _fake("t2", "B", True, 0.4), _fake("t2", "B", True, 0.4),
+    ]
+    summary = summarize_scored(records)
+    t1a, t1b = summary["per_task"]["t1"]["A"], summary["per_task"]["t1"]["B"]
+    t2a, t2b = summary["per_task"]["t2"]["A"], summary["per_task"]["t2"]["B"]
+    assert (t1a["passes"], t1a["trials"], t1a["pass_hat_k"]) == (3, 3, True)
+    assert (t1b["passes"], t1b["pass_hat_k"], t1b["disqualified"]) == (2, False, 1)
+    assert t1b["cost_per_solved_task_usd"] == pytest.approx(0.3)
+    assert t2a["cost_per_solved_task_usd"] == "no solves"
+    assert t2a["runs_missing_cost"] == 1
+    assert t2b["pass_hat_k"] is True
+    overall_a, overall_b = summary["overall"]["A"], summary["overall"]["B"]
+    assert (overall_a["passes"], overall_a["trials"], overall_a["tasks_with_pass_hat_k"]) == (3, 6, 1)
+    assert (overall_b["passes"], overall_b["trials"], overall_b["tasks_with_pass_hat_k"]) == (5, 6, 1)
+    assert overall_b["total_cost_usd"] == pytest.approx(1.8)
+    assert overall_b["cost_per_solved_task_usd"] == pytest.approx(0.36)
