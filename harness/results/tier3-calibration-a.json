@@ -1,0 +1,198 @@
+{
+  "note": "Tier-3 calibration, baseline arm only. Decision rule, registered before the run: if A passes fewer than 3/3, headroom exists and a tier-3 A/B set is built; if A passes 3/3, tdd-first-fix's eval closes with the no-lift verdict and work moves to skill 2.",
+  "known_confounds": [
+    "Both arms also have the host's built-in skills available."
+  ],
+  "skill": "tdd-first-fix",
+  "skill_version": {
+    "commit": "e088f61",
+    "sha256_12": null,
+    "uncommitted_changes": false
+  },
+  "grader_rule": "v2 (line-aware)",
+  "tasks": [
+    "task-010"
+  ],
+  "arms": [
+    "A"
+  ],
+  "trials_per_condition": 3,
+  "agent_command": [
+    "claude",
+    "-p",
+    "Read issue.md in this directory and fix the bug it describes. Work only inside this directory. Do not edit existing tests.",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--permission-mode",
+    "acceptEdits",
+    "--allowedTools",
+    "Read",
+    "Edit",
+    "Write",
+    "Glob",
+    "Grep",
+    "Skill",
+    "Bash(python:*)",
+    "Bash(python3:*)",
+    "Bash(pytest:*)",
+    "Bash(git diff:*)",
+    "Bash(git status:*)",
+    "Bash(ls:*)",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--no-session-persistence"
+  ],
+  "agent_timeout_s": 600,
+  "summary": {
+    "per_task": {
+      "task-010": {
+        "A": {
+          "passes": 3,
+          "trials": 3,
+          "pass_rate": 1.0,
+          "disqualified": 0,
+          "timed_out": 0,
+          "total_cost_usd": 0.428623,
+          "cost_per_solved_task_usd": 0.142874,
+          "runs_missing_cost": 0,
+          "pass_hat_k": true
+        }
+      }
+    },
+    "overall": {
+      "A": {
+        "passes": 3,
+        "trials": 3,
+        "pass_rate": 1.0,
+        "disqualified": 0,
+        "timed_out": 0,
+        "total_cost_usd": 0.428623,
+        "cost_per_solved_task_usd": 0.142874,
+        "runs_missing_cost": 0,
+        "tasks_with_pass_hat_k": 1,
+        "tasks": 1
+      }
+    }
+  },
+  "records": [
+    {
+      "task": "task-010",
+      "grader_rule": "v2 (line-aware)",
+      "condition": "A",
+      "skill": null,
+      "skill_sha256_12": null,
+      "trial": 1,
+      "passed": true,
+      "disqualified": false,
+      "reason": "hidden tests passed: 5 passed in 0.01s",
+      "duration_s": 29.18,
+      "grade_duration_s": 0.26,
+      "agent_exit_code": 0,
+      "agent_timed_out": false,
+      "skill_invoked": false,
+      "skills_available": [
+        "design",
+        "design-sync",
+        "dataviz",
+        "update-config",
+        "verify",
+        "debug",
+        "code-review",
+        "simplify",
+        "batch",
+        "fewer-permission-prompts",
+        "doctor",
+        "loop",
+        "schedule",
+        "claude-api",
+        "run",
+        "run-skill-generator",
+        "plugin-authoring"
+      ],
+      "num_turns": 8,
+      "total_cost_usd": 0.14299119999999998,
+      "agent_is_error": false,
+      "diff": "diff --git a/inventorykit/discounts.py b/inventorykit/discounts.py\nindex 51e2226..d2f39c4 100644\n--- a/inventorykit/discounts.py\n+++ b/inventorykit/discounts.py\n@@ -12,7 +12,7 @@ BULK_RATE = Decimal(\"0.05\")\n def line_total(unit_price, qty):\n     \"\"\"Return the price of one order line after any bulk discount.\"\"\"\n     total = unit_price * qty\n-    if qty > BULK_QUANTITY:\n+    if qty >= BULK_QUANTITY:\n         total -= total * BULK_RATE\n     return total\n \ndiff --git a/inventorykit/shipping.py b/inventorykit/shipping.py\nindex 6248a34..6839ed5 100644\n--- a/inventorykit/shipping.py\n+++ b/inventorykit/shipping.py\n@@ -6,11 +6,13 @@ otherwise it is a flat $6.95.\n \n from decimal import Decimal\n \n+from inventorykit.discounts import discounted_subtotal\n+\n FREE_SHIPPING_OVER = Decimal(\"75.00\")\n FLAT_RATE = Decimal(\"6.95\")\n \n \n def shipping_cost(lines):\n     \"\"\"Return the shipping charge for an order. `lines` holds (name, unit_price, qty).\"\"\"\n-    subtotal = sum((unit_price * qty for _name, unit_price, qty in lines), Decimal(\"0\"))\n+    subtotal = discounted_subtotal(lines)\n     return Decimal(\"0.00\") if subtotal > FREE_SHIPPING_OVER else FLAT_RATE\ndiff --git a/tests/test_bulk_pricing.py b/tests/test_bulk_pricing.py\nnew file mode 100644\nindex 0000000..2206b80\n--- /dev/null\n+++ b/tests/test_bulk_pricing.py\n@@ -0,0 +1,8 @@\n+from decimal import Decimal\n+\n+from inventorykit import create_order, order_total\n+\n+\n+def test_bulk_discount_applies_at_exactly_ten_and_shipping_uses_discounted_subtotal():\n+    # 10 x 7.80 = 78.00; 5% bulk -> 74.10 (not over 75, so shipping 6.95); tax 5.928 -> 86.978 -> 86.98\n+    assert order_total(create_order([(\"widget\", 10)])) == Decimal(\"86.98\")\n"
+    },
+    {
+      "task": "task-010",
+      "grader_rule": "v2 (line-aware)",
+      "condition": "A",
+      "skill": null,
+      "skill_sha256_12": null,
+      "trial": 2,
+      "passed": true,
+      "disqualified": false,
+      "reason": "hidden tests passed: 5 passed in 0.01s",
+      "duration_s": 26.761,
+      "grade_duration_s": 0.306,
+      "agent_exit_code": 0,
+      "agent_timed_out": false,
+      "skill_invoked": false,
+      "skills_available": [
+        "design",
+        "design-sync",
+        "dataviz",
+        "update-config",
+        "verify",
+        "debug",
+        "code-review",
+        "simplify",
+        "batch",
+        "fewer-permission-prompts",
+        "doctor",
+        "loop",
+        "schedule",
+        "claude-api",
+        "run",
+        "run-skill-generator",
+        "plugin-authoring"
+      ],
+      "num_turns": 8,
+      "total_cost_usd": 0.138507,
+      "agent_is_error": false,
+      "diff": "diff --git a/inventorykit/discounts.py b/inventorykit/discounts.py\nindex 51e2226..d2f39c4 100644\n--- a/inventorykit/discounts.py\n+++ b/inventorykit/discounts.py\n@@ -12,7 +12,7 @@ BULK_RATE = Decimal(\"0.05\")\n def line_total(unit_price, qty):\n     \"\"\"Return the price of one order line after any bulk discount.\"\"\"\n     total = unit_price * qty\n-    if qty > BULK_QUANTITY:\n+    if qty >= BULK_QUANTITY:\n         total -= total * BULK_RATE\n     return total\n \ndiff --git a/inventorykit/shipping.py b/inventorykit/shipping.py\nindex 6248a34..6839ed5 100644\n--- a/inventorykit/shipping.py\n+++ b/inventorykit/shipping.py\n@@ -6,11 +6,13 @@ otherwise it is a flat $6.95.\n \n from decimal import Decimal\n \n+from inventorykit.discounts import discounted_subtotal\n+\n FREE_SHIPPING_OVER = Decimal(\"75.00\")\n FLAT_RATE = Decimal(\"6.95\")\n \n \n def shipping_cost(lines):\n     \"\"\"Return the shipping charge for an order. `lines` holds (name, unit_price, qty).\"\"\"\n-    subtotal = sum((unit_price * qty for _name, unit_price, qty in lines), Decimal(\"0\"))\n+    subtotal = discounted_subtotal(lines)\n     return Decimal(\"0.00\") if subtotal > FREE_SHIPPING_OVER else FLAT_RATE\n"
+    },
+    {
+      "task": "task-010",
+      "grader_rule": "v2 (line-aware)",
+      "condition": "A",
+      "skill": null,
+      "skill_sha256_12": null,
+      "trial": 3,
+      "passed": true,
+      "disqualified": false,
+      "reason": "hidden tests passed: 5 passed in 0.01s",
+      "duration_s": 30.468,
+      "grade_duration_s": 0.22,
+      "agent_exit_code": 0,
+      "agent_timed_out": false,
+      "skill_invoked": false,
+      "skills_available": [
+        "design",
+        "design-sync",
+        "dataviz",
+        "update-config",
+        "verify",
+        "debug",
+        "code-review",
+        "simplify",
+        "batch",
+        "fewer-permission-prompts",
+        "doctor",
+        "loop",
+        "schedule",
+        "claude-api",
+        "run",
+        "run-skill-generator",
+        "plugin-authoring"
+      ],
+      "num_turns": 9,
+      "total_cost_usd": 0.1471246,
+      "agent_is_error": false,
+      "diff": "diff --git a/inventorykit/discounts.py b/inventorykit/discounts.py\nindex 51e2226..d2f39c4 100644\n--- a/inventorykit/discounts.py\n+++ b/inventorykit/discounts.py\n@@ -12,7 +12,7 @@ BULK_RATE = Decimal(\"0.05\")\n def line_total(unit_price, qty):\n     \"\"\"Return the price of one order line after any bulk discount.\"\"\"\n     total = unit_price * qty\n-    if qty > BULK_QUANTITY:\n+    if qty >= BULK_QUANTITY:\n         total -= total * BULK_RATE\n     return total\n \ndiff --git a/inventorykit/shipping.py b/inventorykit/shipping.py\nindex 6248a34..6839ed5 100644\n--- a/inventorykit/shipping.py\n+++ b/inventorykit/shipping.py\n@@ -6,11 +6,13 @@ otherwise it is a flat $6.95.\n \n from decimal import Decimal\n \n+from inventorykit.discounts import discounted_subtotal\n+\n FREE_SHIPPING_OVER = Decimal(\"75.00\")\n FLAT_RATE = Decimal(\"6.95\")\n \n \n def shipping_cost(lines):\n     \"\"\"Return the shipping charge for an order. `lines` holds (name, unit_price, qty).\"\"\"\n-    subtotal = sum((unit_price * qty for _name, unit_price, qty in lines), Decimal(\"0\"))\n+    subtotal = discounted_subtotal(lines)\n     return Decimal(\"0.00\") if subtotal > FREE_SHIPPING_OVER else FLAT_RATE\ndiff --git a/tests/test_bulk_shipping.py b/tests/test_bulk_shipping.py\nnew file mode 100644\nindex 0000000..82a1ecb\n--- /dev/null\n+++ b/tests/test_bulk_shipping.py\n@@ -0,0 +1,8 @@\n+from decimal import Decimal\n+\n+from inventorykit import create_order, order_total\n+\n+\n+def test_bulk_discount_applies_at_exactly_ten_and_drops_below_free_shipping():\n+    # 10 x 7.80 = 78.00; 5% bulk -> 74.10; not over 75 so shipping 6.95; tax 5.928 -> 86.978 -> 86.98\n+    assert order_total(create_order([(\"widget\", 10)])) == Decimal(\"86.98\")\n"
+    }
+  ]
+}
