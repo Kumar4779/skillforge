@@ -1,0 +1,32 @@
+diff --git a/inventorykit/discounts.py b/inventorykit/discounts.py
+index 51e2226..d2f39c4 100644
+--- a/inventorykit/discounts.py
++++ b/inventorykit/discounts.py
+@@ -12,7 +12,7 @@ BULK_RATE = Decimal("0.05")
+ def line_total(unit_price, qty):
+     """Return the price of one order line after any bulk discount."""
+     total = unit_price * qty
+-    if qty > BULK_QUANTITY:
++    if qty >= BULK_QUANTITY:
+         total -= total * BULK_RATE
+     return total
+ 
+diff --git a/inventorykit/shipping.py b/inventorykit/shipping.py
+index 6248a34..6839ed5 100644
+--- a/inventorykit/shipping.py
++++ b/inventorykit/shipping.py
+@@ -6,11 +6,13 @@ otherwise it is a flat $6.95.
+ 
+ from decimal import Decimal
+ 
++from inventorykit.discounts import discounted_subtotal
++
+ FREE_SHIPPING_OVER = Decimal("75.00")
+ FLAT_RATE = Decimal("6.95")
+ 
+ 
+ def shipping_cost(lines):
+     """Return the shipping charge for an order. `lines` holds (name, unit_price, qty)."""
+-    subtotal = sum((unit_price * qty for _name, unit_price, qty in lines), Decimal("0"))
++    subtotal = discounted_subtotal(lines)
+     return Decimal("0.00") if subtotal > FREE_SHIPPING_OVER else FLAT_RATE
