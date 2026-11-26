@@ -162,3 +162,68 @@ Frontmatter: `name` (lowercase, hyphenated, matching the folder) and a trigger-f
 | [backnotprop/pstack](https://github.com/backnotprop/pstack) (a mirror of `cursor/plugins/pstack`) | `README.md`; `docs/guide/08-principles.md`; `skills/poteto-mode/playbooks/authoring-a-skill.md`; `skills/swarm/SKILL.md`; `skills/tdd/SKILL.md`; `skills/blast-radius/SKILL.md`; `skills/principle-prove-it-works/SKILL.md` | MIT (`LICENSE`, "Copyright (c) 2026 Lauren Tan"; README "license: MIT"). |
 
 **Rule:** patterns, structure, and methods are adopted freely. Text is original; no source skill's text is copied into this repository. Any future adaptation of licensed text requires attribution, and the source's license notice where its license calls for one, recorded in a `NOTICE` or `ATTRIBUTION.md` file in that skill's folder.
+
+## 10. Coverage map
+
+Reference catalogs fetched 2026-11-25: [anthropics/skills](https://github.com/anthropics/skills) (19 skills) and [backnotprop/pstack](https://github.com/backnotprop/pstack) (59 skills under `skills/`, of which 24 are `principle-*`, plus 3 automation skills under `automations/benny/`). Entries were classified from each skill's own description.
+
+**Marks**, judged against what SkillForge has written today:
+
+- **Covered** — SkillForge has a written skill for it.
+- **Analogue** — a written SkillForge skill works the same territory differently.
+- **Gap** — they have it and SkillForge does not. Where a roadmap slot (§7) is planned for the territory, it is named; planned is not written.
+- **Not applicable** — specific to their product, brand, or host.
+
+### 10.1 Anthropic skills (19)
+
+| Entry | Mark | SkillForge map |
+|---|---|---|
+| `docx` | Gap | Wave 4 `word-documents` |
+| `pdf` | Gap | Wave 4 `pdf-documents` |
+| `pptx` | Gap | Wave 4 `slide-decks` |
+| `xlsx` | Gap | Wave 4 `spreadsheets` |
+| `doc-coauthoring` | Gap | Wave 4 `word-documents`, `research-brief` |
+| `internal-comms` | Gap | Wave 4 `comms-draft`; Wave 3 `meeting-followup` |
+| `algorithmic-art` | Gap | Not planned (creative; outside SkillForge's scope) |
+| `canvas-design` | Gap | Not planned (creative) |
+| `slack-gif-creator` | Gap | Not planned (creative) |
+| `theme-factory` | Gap | Not planned (visual styling) |
+| `frontend-design` | Gap | Not planned |
+| `brand-guidelines` | Not applicable | Anthropic's own brand |
+| `web-artifacts-builder` | Not applicable | claude.ai artifacts |
+| `claude-api` | Not applicable | Anthropic API reference |
+| `academy-guide` | Not applicable | Claude Academy content |
+| `mcp-builder` | Gap | Wave 3 `mcp-server-check` (checks servers rather than building them) |
+| `webapp-testing` | Gap | Wave 1 `verify-before-merge` (adjacent, not equivalent) |
+| `skill-creator` | Gap | Wave 3 `skill-smith`, `eval-writer`. The SkillForge harness does the eval part, but it is a harness, not a skill. |
+| `discernment-nudge` | Gap | Principles layer (`measure-before-claiming`) |
+
+Today: 0 Covered, 0 Analogue, 15 Gap (5 of them not planned), 4 Not applicable.
+
+### 10.2 pstack, by family
+
+| Family | Entries | Mark | SkillForge map |
+|---|---|---|---|
+| Principles layer | the 24 `principle-*` skills, indexed by `poteto-mode` | Gap | Principles layer (§7.6) |
+| Review and parallel work | `swarm`, `interrogate` | Analogue | `swarm-review` (multi-pass review with code-verified consolidation) |
+| | `arena` | Gap | Not planned |
+| Bug fixing | `tdd` | Covered | `tdd-first-fix` |
+| PR tending | `poteto-mode` babysit playbook | Covered | `pr-babysit` |
+| Understanding code | `how`, `why`, `teach` | Gap | Wave 1 `investigate` (for `why`-style regressions) |
+| Change safety | `blast-radius` | Gap | Wave 1 `verify-before-merge` |
+| Design and planning | `architect`, `figure-it-out`, `sharpen`, `reframe` | Gap | Not planned |
+| Session memory and handoff | `recall`, `ketchup`, `ketchup-video`, `show-me-your-work`, `in-your-own-words`, `bro` | Gap | Wave 3 `handoff-writer` |
+| Self-improvement | `reflect`, `automate-me`, `correct` | Gap | Wave 3 `skill-smith` |
+| Writing quality | `technical-writing`, `unslop`, `no-comments` | Gap | Wave 2 `docs-from-code` (adjacent) |
+| Measurement | `benchmark-checklist` | Gap | Wave 2 `perf-hunt`; Principles `cost-is-a-result` |
+| Language-specific | `typescript-best-practices` | Gap | Not planned |
+| Verification family | `create-verification-skill`, `maintain-verification-skill`, `create-formal-verification-skill`, `maintain-formal-verification-skill`, `statechart` | Gap | Wave 1 `verify-before-merge` (generic only); project-specific verification is not planned |
+| Routing and setup | `poteto-mode` (as a router), `poteto-help`, `setup-pstack` | Not applicable | pstack's own configuration and routing |
+| Host-specific | `make-bot-ui` (Grok Bot webhooks); the 3 `automations/benny/` skills (Cursor automations only) | Not applicable | — |
+
+### 10.3 Gaps this map exposed
+
+1. **A principles layer.** pstack's 24 one-idea principle skills give agents a vocabulary that other skills and users can invoke by name. SkillForge has no equivalent.
+2. **A product and document skills family.** Anthropic's `docx`, `pdf`, `pptx`, and `xlsx` cover everyday document work. SkillForge's map was coding-only.
+
+Both are added to the roadmap in §7.6 and §7.7.
