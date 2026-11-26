@@ -32,6 +32,8 @@ PYTEST_TIMEOUT_S = 120
 # treated the same as editing a test.
 _PROTECTED_NAMES = {"conftest.py", "pytest.ini", "sitecustomize.py", "usercustomize.py"}
 _TEST_DIRS = {"test", "tests", "hidden_tests"}
+# Project config files that can carry pytest settings (addopts, testpaths, plugins).
+_TEST_CONFIG_NAMES = {"pyproject.toml", "setup.cfg", "tox.ini"}
 
 
 def patch_paths(patch_diff: str) -> set[str]:
@@ -66,6 +68,8 @@ def disqualification(path: str) -> str | None:
     name = pure.name
     if name.startswith("test_") or name.endswith("_test.py") or name in _PROTECTED_NAMES:
         return f"patch touches a test file: {path}"
+    if name in _TEST_CONFIG_NAMES:
+        return f"patch touches test configuration: {path}"
     return None
 
 

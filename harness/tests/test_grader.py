@@ -31,3 +31,22 @@ def test_record_shape():
     record = grade(TASK_001, "")
     assert set(record) == {"passed", "disqualified", "reason", "duration_s"}
     assert isinstance(record["duration_s"], float)
+
+
+def test_pyproject_edit_is_disqualified():
+    patch = (
+        "diff --git a/pyproject.toml b/pyproject.toml\n"
+        "--- a/pyproject.toml\n"
+        "+++ b/pyproject.toml\n"
+        "@@ -2,3 +2,6 @@\n"
+        ' name = "textkit"\n'
+        ' version = "0.1.0"\n'
+        ' requires-python = ">=3.10"\n'
+        "+\n"
+        "+[tool.pytest.ini_options]\n"
+        '+addopts = "--deselect hidden_tests"\n'
+    )
+    record = grade(TASK_001, patch)
+    assert record["passed"] is False
+    assert record["disqualified"] is True
+    assert record["reason"] == "patch touches test configuration: pyproject.toml"
