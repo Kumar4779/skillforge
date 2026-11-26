@@ -118,3 +118,10 @@ Skills must not depend on a specific agent's proprietary features unless that de
 - **v1 scored run** (`harness/results/tdd-first-fix-scored-v1.json`, 3 tasks x 3 trials per arm): A (no skill) 9/9, B (with skill) 6/9. All three B failures were on `task-002`. Mechanism: the smallest-change rule led the agent to keep the existing in-place `values.sort()`, which mutates the caller's list and fails the hidden no-mutation test. All three A runs replaced it with a sorted copy.
 - **v2 hypothesis:** carving contract-violating side effects out of the smallest-change rule (and pinning conventional input contracts in the failing test) recovers `task-002` without losing `task-001` or `task-003`.
 - **Held-out caveat:** v2 was revised in response to a `task-002` failure, so `task-002` is no longer held out for v2. A v2 gain on `task-002` shows the revision addresses the observed failure; it does not show generalization. That requires tasks not used in the revision.
+- **Closure (eval closed, no lift measured).**
+  - *v1 negative result:* B 6/9 vs A 9/9 on tasks 001-003. All three B failures were on `task-002`, where the smallest-change rule preserved the caller-mutating in-place sort.
+  - *v2 fix and recovery:* carving contract-violating side effects out of the smallest-change rule brought B to 9/9 on tasks 001-003, matching A 9/9 (not held out for `task-002`).
+  - *Held-out, no harm:* on tasks 004-006, built after v2 was frozen, A 9/9 and B 9/9.
+  - *Calibration ceiling:* the baseline arm alone passed tier-2 (tasks 007-009, cross-module, 9/9) and the tier-3 probe (`task-010`, seven modules, two interacting bugs, 3/3). Under the decision rule registered before the tier-3 run, a 3/3 baseline closes the eval.
+  - *Verdict:* across 10 tasks the baseline passed 39 of 39 scored and calibration runs. The v2 skill arm matched it at roughly 20% higher cost per solved task (+24% on tasks 001-003, +19% held-out). No lift measured.
+  - *Scope:* small, self-contained bug-fix tasks with the current frontier model. Long-horizon or ambiguous work and weaker models were not tested. The skill stays published; SkillForge claims no measured benefit for it.

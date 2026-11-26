@@ -25,7 +25,7 @@ LEARNING.md  Concepts checklist
 
 | Skill | Status |
 |---|---|
-| `tdd-first-fix` | Evaled — v2 scored; held-out run recorded |
+| `tdd-first-fix` | Evaled — eval closed, no lift measured |
 | `pr-babysit` | Not yet written |
 | `swarm-review` | Not yet written |
 | `verify-before-merge` | Not yet written |
@@ -77,6 +77,10 @@ Source: [`harness/results/tdd-first-fix-heldout-v1.json`](harness/results/tdd-fi
 | Cost per solved task | $0.1041 | $0.1243 |
 
 Held-out set: tasks 004-006 were built after tdd-first-fix v2 was frozen; the skill was never revised against these tasks. 3 tasks x 3 trials per arm. Small sample — directional, not conclusive. Both arms also have the host's built-in skills available.
+
+### Verdict — tdd-first-fix
+
+Eval closed for `tdd-first-fix` v2. Across 10 tasks the no-skill baseline passed 39 of 39 scored and calibration runs, including multi-module tasks with interacting bugs; after the v2 revision the skill arm matched it at roughly 20% higher cost per solved task (+24% on tasks 001-003, +19% on the held-out set). No lift measured. Scope: small, self-contained bug-fix tasks with the current frontier model; long-horizon or ambiguous work and weaker models were not tested. The skill stays published; SkillForge claims no measured benefit for it.
 
 ## License
 
