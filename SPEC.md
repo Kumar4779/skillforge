@@ -111,6 +111,40 @@ Skills must not depend on a specific agent's proprietary features unless that de
 - **Wave 3** starts when Wave 2's first skills are evaled.
 - Folders are created wave by wave as skills are written. No empty folders are created ahead of the work.
 
+### 7.6 Principles layer (about 10 micro-skills)
+
+One idea per skill, each derived from SkillForge's own eval record and stated in SkillForge's words. Unlocks when Wave 1 is fully written (5 of 5). Seed list:
+
+1. `measure-before-claiming` — say a skill, fix, or change helps only when a measurement shows it; otherwise say it is unmeasured. (The `tdd-first-fix` verdict, §8.)
+2. `reproduce-first` — make the failure happen before changing anything; a fix for a failure you never saw is a guess.
+3. `calibrate-before-comparing` — measure the baseline alone before running an A/B; a task the baseline always solves cannot show a difference. (Tier-2 and tier-3 calibration, §8.)
+4. `publish-the-failure` — report negative and null results with the same prominence as positive ones. (`tdd-first-fix` v1, B 6/9.)
+5. `smallest-change-honest-scope` — make the smallest change that fixes the defect, and count a contract-violating side effect as part of the defect, not behaviour to preserve. (The v2 carve-out, §8.)
+6. `verify-dont-vote` — agreement between reviewers or runs is not evidence; settle every disputed or top claim by checking the artifact itself.
+7. `permissions-before-capability` — declare the access a task needs before using it, and ask before anything outside that declaration. (§9.2a.)
+8. `ground-truth-is-execution` — decide pass or fail by running the real thing; a judgment of how the output looks does not decide. (§4.2.)
+9. `cost-is-a-result` — report what a result cost next to whether it passed; parity at higher cost is not a gain. (Cost per solved task, §8.)
+10. `frozen-artifacts-stay-frozen` — an artifact that has been measured is not edited in place; a change makes a new version with its own measurement. (The `tdd-first-fix` standard exemption, §9.)
+
+### 7.7 Wave 4 — Sensei product skills (6)
+
+Skills for Sensei's daily-life surfaces, following the document-family pattern (§10.1): one skill per output type, with bundled scripts for the deterministic file work. Unlocks when Wave 1 is fully written (5 of 5).
+
+1. `word-documents` — create and edit word-processor documents.
+2. `pdf-documents` — read, extract from, fill, and produce PDFs.
+3. `spreadsheets` — create, clean, and calculate in spreadsheets.
+4. `slide-decks` — build and revise presentations.
+5. `research-brief` — gather sources and write a cited brief.
+6. `comms-draft` — draft emails, messages, and announcements in the user's voice.
+
+### 7.8 Counting rule for the expanded map
+
+- **Workflow skills** (Waves 1–4) count when written in full **and** holding a first eval score. Stubs never count.
+- **Principle skills** do not count toward the total until a method for measuring them exists. A principle is meant to change many decisions across many tasks, and SkillForge has no method yet for measuring that. The method is an open problem, recorded here; it is not solved by assertion.
+- **Total map:** 25 (Waves 1–3) + about 10 (Principles layer) + 6 (Wave 4) = **about 41**.
+- **Counted today: 1** (`tdd-first-fix`: written, evaled, eval closed). Written but not yet evaled, and so not counted: `pr-babysit`, `swarm-review`.
+- Folders for the new families are created when each skill is written, not before (§7.5).
+
 ## 8. Revision log
 
 ### `tdd-first-fix`
