@@ -215,3 +215,27 @@ def test_scored_cli_runs_only_filtered_tasks_and_writes_chosen_path(tmp_path, mo
     assert len(results["records"]) == 4
     assert results["note"] == "custom note"
     assert set(results["summary"]["per_task"]) == {"task-005", "task-006"}
+
+
+def test_parse_arms():
+    assert run_eval.parse_arms("A") == ["A"]
+    assert run_eval.parse_arms("b") == ["B"]
+    assert run_eval.parse_arms("AB") == ["A", "B"]
+    assert run_eval.parse_arms("BA") == ["A", "B"]
+    for bad in ("", "C", "AA", "ABC"):
+        with pytest.raises(ValueError):
+            run_eval.parse_arms(bad)
+
+
+def test_scored_cli_arms_a_runs_only_the_baseline(tmp_path, monkeypatch):
+    monkeypatch.setattr(run_eval, "AGENT_COMMAND", ["true"])
+    out = tmp_path / "calibration.json"
+    monkeypatch.setattr(sys, "argv", ["run_eval.py", "--scored", "--trials", "2", "--tasks", "task-008",
+                                      "--arms", "A", "--out", str(out)])
+    assert run_eval.main() == 0
+    results = json.loads(out.read_text())
+    assert results["arms"] == ["A"]
+    assert [r["condition"] for r in results["records"]] == ["A", "A"]
+    assert set(results["summary"]["overall"]) == {"A"}
+    assert set(results["summary"]["per_task"]["task-008"]) == {"A"}
+    assert results["skill_version"]["sha256_12"] is None

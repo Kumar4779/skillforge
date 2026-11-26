@@ -453,18 +453,19 @@ def _arm_summary(records: list[dict]) -> dict:
 
 
 def summarize_scored(records: list[dict]) -> dict:
-    """Per-task and overall pass counts, pass^k, and cost per arm."""
+    """Per-task and overall pass counts, pass^k, and cost for each arm that ran."""
     tasks = sorted({record["task"] for record in records})
+    arms = [arm for arm in ("A", "B") if any(r["condition"] == arm for r in records)]
     per_task = {}
     for task in tasks:
         per_task[task] = {}
-        for arm in ("A", "B"):
+        for arm in arms:
             arm_records = [r for r in records if r["task"] == task and r["condition"] == arm]
             summary = _arm_summary(arm_records)
             summary["pass_hat_k"] = bool(arm_records) and summary["passes"] == summary["trials"]
             per_task[task][arm] = summary
     overall = {}
-    for arm in ("A", "B"):
+    for arm in arms:
         summary = _arm_summary([r for r in records if r["condition"] == arm])
         summary["tasks_with_pass_hat_k"] = sum(per_task[task][arm]["pass_hat_k"] for task in tasks)
         summary["tasks"] = len(tasks)
@@ -510,11 +511,19 @@ def _next_scored_path() -> Path:
     return path
 
 
-def run_scored(trials: int, tasks: list[Path]) -> list[dict]:
+def parse_arms(value: str) -> list[str]:
+    """'A', 'B', or 'AB' -> list of conditions to run, in A-then-B order."""
+    arms = value.strip().upper()
+    if not arms or set(arms) - {"A", "B"} or len(set(arms)) != len(arms):
+        raise ValueError(f"--arms must be A, B, or AB (got {value!r})")
+    return [arm for arm in ("A", "B") if arm in arms]
+
+
+def run_scored(trials: int, tasks: list[Path], arms: list[str] = ("A", "B")) -> list[dict]:
     records = []
     for task_dir in tasks:
         for trial in range(1, trials + 1):
-            for condition in ("A", "B"):
+            for condition in arms:
                 print(f"running {task_dir.name}, condition {condition}, trial {trial} ...", flush=True)
                 record = run_trial(task_dir, condition, trial)
                 print(json.dumps({k: v for k, v in record.items() if k not in ("diff", "skills_available")}),
@@ -530,6 +539,7 @@ def main() -> int:
     parser.add_argument("--scored", action="store_true",
                         help="run every task in harness/fixtures/, both arms, --trials each, and summarize")
     parser.add_argument("--tasks", help="comma-separated fixture names for --scored (default: all fixtures)")
+    parser.add_argument("--arms", default="AB", help="arms for --scored: A, B, or AB (default AB)")
     parser.add_argument("--note", help="results-file note for --scored (default: the standard small-sample note)")
     parser.add_argument("--task", help="task fixture directory for --run")
     parser.add_argument("--trials", type=int, default=1, help="trials per condition for --run / --scored")
@@ -546,7 +556,11 @@ def main() -> int:
             tasks = task_dirs([name.strip() for name in args.tasks.split(",") if name.strip()] if args.tasks else None)
         except ValueError as exc:
             parser.error(str(exc))
-        records = run_scored(args.trials, tasks)
+        try:
+            arms = parse_arms(args.arms)
+        except ValueError as exc:
+            parser.error(str(exc))
+        records = run_scored(args.trials, tasks, arms)
         out = Path(args.out) if args.out else _next_scored_path()
         results = {
             "note": args.note or SCORED_NOTE,
@@ -555,6 +569,7 @@ def main() -> int:
             "skill_version": skill_version(records),
             "grader_rule": GRADER_RULE,
             "tasks": [path.name for path in tasks],
+            "arms": arms,
             "trials_per_condition": args.trials,
             "agent_command": AGENT_COMMAND,
             "agent_timeout_s": AGENT_TIMEOUT_S,
