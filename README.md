@@ -2,7 +2,7 @@
 
 SkillForge is a portable library of `SKILL.md` files for coding agents, paired with a blind-eval harness that measures whether each skill actually helps.
 
-**Status:** Two skills are written. `tdd-first-fix` is evaled and its eval is closed (no lift measured; see Eval results below). `pr-babysit` is written and not yet evaled. The other three Core skills (`swarm-review`, `verify-before-merge`, `investigate`) are not yet written.
+**Status:** Three skills are written. `tdd-first-fix` is evaled and its eval is closed (no lift measured; see Eval results below). `pr-babysit` and `swarm-review` are written and not yet evaled. The other two Core skills (`verify-before-merge`, `investigate`) are not yet written.
 
 ## What it is
 
@@ -27,7 +27,7 @@ LEARNING.md  Concepts checklist
 |---|---|
 | `tdd-first-fix` | Evaled — eval closed, no lift measured |
 | `pr-babysit` | Written — not yet evaled |
-| `swarm-review` | Not yet written |
+| `swarm-review` | Written — not yet evaled |
 | `verify-before-merge` | Not yet written |
 | `investigate` | Not yet written |
 
