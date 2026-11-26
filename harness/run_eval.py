@@ -422,8 +422,18 @@ SCORED_NOTE = (
 )
 
 
-def task_dirs() -> list[Path]:
-    return sorted(path for path in (HARNESS_DIR / "fixtures").iterdir() if path.is_dir())
+HOST_SKILLS_CONFOUND = "Both arms also have the host's built-in skills available."
+
+
+def task_dirs(names: list[str] | None = None) -> list[Path]:
+    """All task fixtures, or only the named ones (in the order given). Unknown names are an error."""
+    available = {path.name: path for path in (HARNESS_DIR / "fixtures").iterdir() if path.is_dir()}
+    if not names:
+        return [available[name] for name in sorted(available)]
+    unknown = [name for name in names if name not in available]
+    if unknown:
+        raise ValueError(f"unknown task(s): {', '.join(unknown)}; available: {', '.join(sorted(available))}")
+    return [available[name] for name in dict.fromkeys(names)]
 
 
 def _arm_summary(records: list[dict]) -> dict:
@@ -500,9 +510,9 @@ def _next_scored_path() -> Path:
     return path
 
 
-def run_scored(trials: int) -> list[dict]:
+def run_scored(trials: int, tasks: list[Path]) -> list[dict]:
     records = []
-    for task_dir in task_dirs():
+    for task_dir in tasks:
         for trial in range(1, trials + 1):
             for condition in ("A", "B"):
                 print(f"running {task_dir.name}, condition {condition}, trial {trial} ...", flush=True)
@@ -519,9 +529,11 @@ def main() -> int:
     parser.add_argument("--run", action="store_true", help="run a live A/B with Claude Code headless")
     parser.add_argument("--scored", action="store_true",
                         help="run every task in harness/fixtures/, both arms, --trials each, and summarize")
+    parser.add_argument("--tasks", help="comma-separated fixture names for --scored (default: all fixtures)")
+    parser.add_argument("--note", help="results-file note for --scored (default: the standard small-sample note)")
     parser.add_argument("--task", help="task fixture directory for --run")
     parser.add_argument("--trials", type=int, default=1, help="trials per condition for --run / --scored")
-    parser.add_argument("--out", help="results JSON for --run (default: harness/results/<task>-ab-smoke.json "
+    parser.add_argument("--out", help="results JSON for --run / --scored (--run default: harness/results/<task>-ab-smoke.json "
                                       "below 3 trials, otherwise <task>-ab-n<trials>.json)")
     parser.add_argument("task_dir", nargs="?", help="task fixture directory")
     parser.add_argument("patch_file", nargs="?", help="unified diff to grade")
@@ -530,14 +542,19 @@ def main() -> int:
     if args.self_test:
         return self_test()
     if args.scored:
-        records = run_scored(args.trials)
+        try:
+            tasks = task_dirs([name.strip() for name in args.tasks.split(",") if name.strip()] if args.tasks else None)
+        except ValueError as exc:
+            parser.error(str(exc))
+        records = run_scored(args.trials, tasks)
         out = Path(args.out) if args.out else _next_scored_path()
         results = {
-            "note": SCORED_NOTE,
+            "note": args.note or SCORED_NOTE,
+            "known_confounds": [HOST_SKILLS_CONFOUND],
             "skill": SKILL_NAME,
             "skill_version": skill_version(records),
             "grader_rule": GRADER_RULE,
-            "tasks": [path.name for path in task_dirs()],
+            "tasks": [path.name for path in tasks],
             "trials_per_condition": args.trials,
             "agent_command": AGENT_COMMAND,
             "agent_timeout_s": AGENT_TIMEOUT_S,

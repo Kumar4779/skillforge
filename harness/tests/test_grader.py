@@ -1,3 +1,4 @@
+import json
 import re
 import sys
 from pathlib import Path
@@ -188,3 +189,29 @@ def test_skill_version_rejects_mixed_skill_texts():
     records = [{"condition": "B", "skill_sha256_12": "aaaaaaaaaaaa"}, {"condition": "B", "skill_sha256_12": "bbbbbbbbbbbb"}]
     with pytest.raises(RuntimeError, match="different SKILL.md texts"):
         run_eval.skill_version(records)
+
+
+def test_task_filter_selects_only_named_tasks():
+    selected = run_eval.task_dirs(["task-004", "task-005", "task-006"])
+    assert [path.name for path in selected] == ["task-004", "task-005", "task-006"]
+    assert all(path.parent == run_eval.HARNESS_DIR / "fixtures" for path in selected)
+
+
+def test_task_filter_defaults_to_all_fixtures_and_rejects_unknown_names():
+    assert [path.name for path in run_eval.task_dirs()] == [path.name for path in TASK_DIRS]
+    with pytest.raises(ValueError, match="unknown task"):
+        run_eval.task_dirs(["task-004", "task-999"])
+
+
+def test_scored_cli_runs_only_filtered_tasks_and_writes_chosen_path(tmp_path, monkeypatch):
+    monkeypatch.setattr(run_eval, "AGENT_COMMAND", ["true"])
+    out = tmp_path / "scored.json"
+    monkeypatch.setattr(sys, "argv", ["run_eval.py", "--scored", "--trials", "1", "--tasks", "task-005,task-006",
+                                      "--out", str(out), "--note", "custom note"])
+    assert run_eval.main() == 0
+    results = json.loads(out.read_text())
+    assert results["tasks"] == ["task-005", "task-006"]
+    assert sorted({r["task"] for r in results["records"]}) == ["task-005", "task-006"]
+    assert len(results["records"]) == 4
+    assert results["note"] == "custom note"
+    assert set(results["summary"]["per_task"]) == {"task-005", "task-006"}
