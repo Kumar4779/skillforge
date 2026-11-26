@@ -1,0 +1,13 @@
+diff --git a/sessionkit/sessions.py b/sessionkit/sessions.py
+index e3c7d7f..8d2edd4 100644
+--- a/sessionkit/sessions.py
++++ b/sessionkit/sessions.py
+@@ -5,7 +5,7 @@ from sessionkit.store import SessionRecord
+ 
+ def create_session(user_id, now, ttl_minutes=60):
+     """Start a session for `user_id` at time `now` that lasts `ttl_minutes` minutes."""
+-    return SessionRecord(user_id=user_id, created_at=now, ttl_seconds=ttl_minutes)
++    return SessionRecord(user_id=user_id, created_at=now, ttl_seconds=ttl_minutes * 60)
+ 
+ 
+ def is_valid(session, now):

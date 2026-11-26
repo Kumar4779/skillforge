@@ -1,0 +1,11 @@
+diff --git a/shopkit/cart.py b/shopkit/cart.py
+index 609be80..e3daef2 100644
+--- a/shopkit/cart.py
++++ b/shopkit/cart.py
+@@ -21,5 +21,5 @@ class Cart:
+     def total(self):
+         lines = [(name, price, qty) for name, (price, qty) in self._lines.items()]
+         after_promo = apply_promo(lines)
+-        discount = apply_coupon(self.subtotal()) if self.coupon else 0
++        discount = apply_coupon(after_promo) if self.coupon else 0
+         return after_promo - discount

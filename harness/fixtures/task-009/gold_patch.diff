@@ -1,0 +1,25 @@
+diff --git a/reportkit/aggregate.py b/reportkit/aggregate.py
+index d54d8b2..0279d2a 100644
+--- a/reportkit/aggregate.py
++++ b/reportkit/aggregate.py
+@@ -1,13 +1,16 @@
+ """Monthly aggregation of imported transactions."""
+ 
++from reportkit.dates import parse_date
++
+ 
+ def monthly_totals(transactions):
+     """Sum amounts by calendar month.
+ 
+     `transactions` is an iterable of (date string, amount). Returns {(year, month): total}.
+     """
+-    by_month = {}
++    totals = {}
+     for tx_date, amount in transactions:
+-        month = tx_date[:7]  # "YYYY-MM"
+-        by_month[month] = by_month.get(month, 0) + amount
+-    return {(int(month[:4]), int(month[5:7].strip("-"))): total for month, total in by_month.items()}
++        d = parse_date(tx_date)
++        key = (d.year, d.month)
++        totals[key] = totals.get(key, 0) + amount
++    return totals
