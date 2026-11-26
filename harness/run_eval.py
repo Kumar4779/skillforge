@@ -37,6 +37,7 @@ from pathlib import Path, PurePosixPath
 HARNESS_DIR = Path(__file__).resolve().parent
 TASK_001 = HARNESS_DIR / "fixtures" / "task-001"
 PYTEST_TIMEOUT_S = 120
+GRADER_RULE = "v2 (line-aware)"
 
 REPO_DIR = HARNESS_DIR.parent
 SKILL_NAME = "tdd-first-fix"
@@ -419,7 +420,7 @@ def main() -> int:
         task_name = Path(args.task).name
         suffix = "ab-smoke" if args.trials < 3 else f"ab-n{args.trials}"
         out = Path(args.out) if args.out else HARNESS_DIR / "results" / f"{task_name}-{suffix}.json"
-        results = {"task": task_name, "trials_per_condition": args.trials,
+        results = {"task": task_name, "grader_rule": GRADER_RULE, "trials_per_condition": args.trials,
                    "agent_command": AGENT_COMMAND, "records": records}
         if args.trials < 3:
             results = {"note": small_sample_note(args.trials), **results}

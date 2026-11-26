@@ -45,6 +45,15 @@ Skills must not depend on a specific agent's proprietary features unless that de
 
 ### 4.5 Guardrails
 - **Test edits are an automatic fail.** Any modification, deletion, or skipping of the task's evaluation tests or checks fails the trial, regardless of the final check result.
+- **Automatic-fail rule, as enforced (grader rule v2, line-aware).** A patch is disqualified if it:
+  - modifies or deletes any existing line of an existing test file, or deletes or renames an existing test file;
+  - touches the hidden tests; or
+  - adds or edits test configuration (`conftest.py`, `pytest.ini`, `pyproject.toml`, `setup.cfg`, `tox.ini`, `sitecustomize.py`, `usercustomize.py`).
+
+  **Adding tests is allowed**, both new test files and new tests appended to existing files. The hidden tests live outside the agent's workspace and are the ground truth, so added tests cannot change the verdict. Rule v1 disqualified any change under `tests/`, which penalized exactly the test-writing that skills such as `tdd-first-fix` require.
+
+### 4.6 Known confounds
+- **Host built-in skills.** The host agent's own built-in skills (for Claude Code, e.g. `verify`, `debug`, `simplify`) are available in both arms. They are present equally, so the comparison stays like-for-like, but they may overlap with the skill under test. This is noted, not removed.
 
 ## 5. Reporting and honesty rule
 
