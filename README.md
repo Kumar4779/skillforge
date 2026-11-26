@@ -26,7 +26,7 @@ LEARNING.md  Concepts checklist
 | Skill | Status |
 |---|---|
 | `tdd-first-fix` | Evaled — eval closed, no lift measured |
-| `pr-babysit` | Not yet written |
+| `pr-babysit` | Written — not yet evaled |
 | `swarm-review` | Not yet written |
 | `verify-before-merge` | Not yet written |
 | `investigate` | Not yet written |
