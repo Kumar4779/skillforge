@@ -3,7 +3,8 @@
 Grades a candidate patch against a task's hidden tests:
 
     1. Copy the task's project/ into a fresh temp workspace and git init it.
-    2. Refuse (disqualify) any patch that touches test or test-harness files.
+    2. Refuse (disqualify) patches that change existing tests, hidden tests, or test
+       configuration. Adding new tests is allowed (grader rule v2).
     3. Apply the patch.
     4. Copy hidden_tests/ in only after the patch is applied.
     5. Run pytest on the hidden tests. Execution is the ground truth.
@@ -24,11 +25,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 HARNESS_DIR = Path(__file__).resolve().parent
@@ -61,48 +64,116 @@ AGENT_COMMAND = [
 _SETUP_PATHS = ["issue.md", ".claude"]
 _WORKSPACE_EXCLUDES = "__pycache__/\n*.pyc\n.pytest_cache/\n"
 
-# Files that can change how tests are collected or run. Editing any of them is
-# treated the same as editing a test.
-_PROTECTED_NAMES = {"conftest.py", "pytest.ini", "sitecustomize.py", "usercustomize.py"}
-_TEST_DIRS = {"test", "tests", "hidden_tests"}
-# Project config files that can carry pytest settings (addopts, testpaths, plugins).
-_TEST_CONFIG_NAMES = {"pyproject.toml", "setup.cfg", "tox.ini"}
+# Grader rule v2 (line-aware):
+#   - Paths outside the project, hidden_tests/, and test configuration: always disqualify.
+#   - New test files: allowed. The hidden tests, kept outside the workspace, decide pass/fail.
+#   - Existing test files: allowed only as pure additions. Removing, changing, renaming, or
+#     deleting existing test content disqualifies.
+_TEST_CONFIG_NAMES = {
+    "conftest.py", "pytest.ini", "pyproject.toml", "setup.cfg", "tox.ini",
+    "sitecustomize.py", "usercustomize.py",
+}
+_TEST_DIRS = {"test", "tests"}
+_HUNK_HEADER = re.compile(r"^@@ -\d+(?:,(\d+))? \+\d+(?:,(\d+))? @@")
 
 
-def patch_paths(patch_diff: str) -> set[str]:
-    """Return every file path a unified diff reads or writes."""
-    paths = set()
-    for line in patch_diff.splitlines():
+@dataclass
+class FileChange:
+    old_path: str | None  # None when the file is created
+    new_path: str | None  # None when the file is deleted
+    added: int = 0
+    removed: int = 0
+
+    @property
+    def paths(self) -> set[str]:
+        return {path for path in (self.old_path, self.new_path) if path}
+
+
+def _strip_prefix(path: str) -> str | None:
+    path = path.split("\t")[0]
+    if path == "/dev/null":
+        return None
+    return path[2:] if path.startswith(("a/", "b/")) else path
+
+
+def parse_patch(patch_diff: str) -> list[FileChange]:
+    """Split a unified diff into per-file changes with added/removed line counts.
+
+    Hunks are consumed by the line counts in their @@ headers, so a removed line whose
+    content starts with "-- " is never mistaken for a file header.
+    """
+    changes: list[FileChange] = []
+    current: FileChange | None = None
+    lines = patch_diff.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
         if line.startswith("diff --git "):
             parts = line.split()
-            candidates = parts[2:4]
-        elif line.startswith(("--- ", "+++ ")):
-            candidates = [line[4:].split("\t")[0]]
-        elif line.startswith(("rename from ", "rename to ", "copy from ", "copy to ")):
-            candidates = [line.split(" ", 2)[2]]
-        else:
-            continue
-        for path in candidates:
-            if path == "/dev/null":
-                continue
-            if path.startswith(("a/", "b/")):
-                path = path[2:]
-            paths.add(path)
-    return paths
+            current = FileChange(_strip_prefix(parts[2]), _strip_prefix(parts[3]))
+            changes.append(current)
+        elif line.startswith("--- ") and i + 1 < len(lines) and lines[i + 1].startswith("+++ "):
+            if current is None or current.added or current.removed:
+                current = FileChange(None, None)
+                changes.append(current)
+            current.old_path = _strip_prefix(line[4:])
+            current.new_path = _strip_prefix(lines[i + 1][4:])
+            i += 1
+        elif line.startswith(("new file mode", "deleted file mode")) and current is not None:
+            if line.startswith("new"):
+                current.old_path = None
+            else:
+                current.new_path = None
+        elif line.startswith(("rename from ", "copy from ")) and current is not None:
+            current.old_path = line.split(" ", 2)[2]
+        elif line.startswith(("rename to ", "copy to ")) and current is not None:
+            current.new_path = line.split(" ", 2)[2]
+        elif (match := _HUNK_HEADER.match(line)) and current is not None:
+            old_left = int(match.group(1) or 1)
+            new_left = int(match.group(2) or 1)
+            while (old_left > 0 or new_left > 0) and i + 1 < len(lines):
+                i += 1
+                body = lines[i]
+                if body.startswith("\\"):  # "\ No newline at end of file"
+                    continue
+                if body.startswith("-"):
+                    current.removed += 1
+                    old_left -= 1
+                elif body.startswith("+"):
+                    current.added += 1
+                    new_left -= 1
+                else:
+                    old_left -= 1
+                    new_left -= 1
+        i += 1
+    return changes
 
 
-def disqualification(path: str) -> str | None:
-    """Return why touching `path` disqualifies a patch, or None if it is allowed."""
+def is_test_path(path: str) -> bool:
     pure = PurePosixPath(path)
-    if pure.is_absolute() or ".." in pure.parts:
-        return f"patch touches a path outside the project: {path}"
-    if any(part in _TEST_DIRS for part in pure.parts[:-1]):
-        return f"patch touches a test file: {path}"
     name = pure.name
-    if name.startswith("test_") or name.endswith("_test.py") or name in _PROTECTED_NAMES:
-        return f"patch touches a test file: {path}"
-    if name in _TEST_CONFIG_NAMES:
-        return f"patch touches test configuration: {path}"
+    return (
+        any(part in _TEST_DIRS for part in pure.parts[:-1])
+        or name.startswith("test_")
+        or name.endswith("_test.py")
+    )
+
+
+def disqualification(change: FileChange, project_dir: Path) -> str | None:
+    """Return why `change` disqualifies the patch, or None if it is allowed."""
+    for path in sorted(change.paths):
+        pure = PurePosixPath(path)
+        if pure.is_absolute() or ".." in pure.parts:
+            return f"patch touches a path outside the project: {path}"
+        if "hidden_tests" in pure.parts:
+            return f"patch touches hidden tests: {path}"
+        if pure.name in _TEST_CONFIG_NAMES:
+            return f"patch touches test configuration: {path}"
+
+    old = change.old_path
+    if old and is_test_path(old) and (project_dir / old).exists():
+        if change.removed or change.new_path != old:
+            return f"patch modifies existing test content: {old}"
     return None
 
 
@@ -123,8 +194,8 @@ def grade(task_dir: str | Path, patch_diff: str) -> dict:
     start = time.monotonic()
     task_dir = Path(task_dir)
 
-    for path in sorted(patch_paths(patch_diff)):
-        reason = disqualification(path)
+    for change in parse_patch(patch_diff):
+        reason = disqualification(change, task_dir / "project")
         if reason:
             return _record(False, True, reason, start)
 
@@ -165,31 +236,59 @@ def grade(task_dir: str | Path, patch_diff: str) -> dict:
         return _record(False, False, f"hidden tests failed: {summary}", start)
 
 
-def make_test_edit_patch() -> str:
-    """A patch that weakens a visible test. The grader must disqualify it."""
-    return (
-        "diff --git a/tests/test_durations.py b/tests/test_durations.py\n"
-        "--- a/tests/test_durations.py\n"
-        "+++ b/tests/test_durations.py\n"
-        "@@ -2,7 +2,7 @@ from textkit import parse_duration\n"
-        " \n"
-        " \n"
-        " def test_hours():\n"
-        '-    assert parse_duration("2h") == 7200\n'
-        "+    assert True\n"
-        " \n"
-        " \n"
-        " def test_hours_and_minutes():\n"
-    )
+def make_patch(task_dir: Path, files: dict[str, str | None]) -> str:
+    """Build a real git diff against task_dir/project. Map path -> new content, or None to delete."""
+    with tempfile.TemporaryDirectory(prefix="skillforge-patch-") as tmp:
+        workspace = Path(tmp) / "workspace"
+        shutil.copytree(task_dir / "project", workspace)
+        _git(workspace, "init", "-q")
+        _git(workspace, "add", "-A")
+        _git(workspace, "commit", "-q", "-m", "base")
+        for path, content in files.items():
+            target = workspace / path
+            if content is None:
+                target.unlink()
+            else:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(content)
+        _git(workspace, "add", "-A")
+        return _git(workspace, "diff", "--cached", "HEAD")
+
+
+def task_001_cases() -> list[tuple[str, str, dict]]:
+    """Patches for task-001 and the grade each must get. Shared by --self-test and pytest."""
+    project = TASK_001 / "project"
+    durations = (project / "textkit" / "durations.py").read_text()
+    tests = (project / "tests" / "test_durations.py").read_text()
+    fix = {"textkit/durations.py": durations.replace(
+        "return hours * 3600 + minutes * 60\n", "return hours * 3600 + minutes * 60 + seconds\n")}
+    new_test = "from textkit import parse_duration\n\n\ndef test_seconds():\n    assert parse_duration(\"45s\") == 45\n"
+    appended = tests + "\n\ndef test_seconds():\n    assert parse_duration(\"45s\") == 45\n"
+    changed_line = tests.replace('assert parse_duration("2h") == 7200', "assert True")
+    deleted_test = tests.replace('def test_hours():\n    assert parse_duration("2h") == 7200\n\n\n', "")
+    pyproject = (project / "pyproject.toml").read_text() + '\n[tool.pytest.ini_options]\naddopts = "-p no:randomly"\n'
+
+    passes = {"passed": True, "disqualified": False}
+    fails = {"passed": False, "disqualified": False}
+    dq = {"passed": False, "disqualified": True}
+    return [
+        ("gold patch", (TASK_001 / "gold_patch.diff").read_text(), passes),
+        ("empty patch", "", fails),
+        ("new test file + fix", make_patch(TASK_001, {**fix, "tests/test_seconds.py": new_test}), passes),
+        ("appended test + fix", make_patch(TASK_001, {**fix, "tests/test_durations.py": appended}), passes),
+        ("changed existing test line + fix",
+         make_patch(TASK_001, {**fix, "tests/test_durations.py": changed_line}),
+         {**dq, "reason": "patch modifies existing test content: tests/test_durations.py"}),
+        ("deleted existing test + fix",
+         make_patch(TASK_001, {**fix, "tests/test_durations.py": deleted_test}),
+         {**dq, "reason": "patch modifies existing test content: tests/test_durations.py"}),
+        ("pyproject.toml edit + fix", make_patch(TASK_001, {**fix, "pyproject.toml": pyproject}),
+         {**dq, "reason": "patch touches test configuration: pyproject.toml"}),
+    ]
 
 
 def self_test() -> int:
-    gold = (TASK_001 / "gold_patch.diff").read_text()
-    cases = [
-        ("gold patch", gold, {"passed": True, "disqualified": False}),
-        ("empty patch", "", {"passed": False, "disqualified": False}),
-        ("test-edit patch", make_test_edit_patch(), {"passed": False, "disqualified": True}),
-    ]
+    cases = task_001_cases()
     failures = 0
     for name, patch, expected in cases:
         record = grade(TASK_001, patch)
