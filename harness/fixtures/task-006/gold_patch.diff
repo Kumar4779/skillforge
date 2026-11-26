@@ -1,0 +1,17 @@
+diff --git a/listkit/dedupe.py b/listkit/dedupe.py
+index 0a8b1c0..576b499 100644
+--- a/listkit/dedupe.py
++++ b/listkit/dedupe.py
+@@ -3,10 +3,8 @@
+ 
+ def dedupe_sorted(values):
+     """Return a new list of the unique items in `values`, sorted."""
+-    values.sort()
+     unique = []
+-    for item in values:
++    for item in sorted(values):
+         if not unique or unique[-1] != item:
+             unique.append(item)
+-    values[:] = unique
+-    return values
++    return unique

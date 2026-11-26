@@ -1,0 +1,17 @@
+diff --git a/datekit/business.py b/datekit/business.py
+index afe9c4c..ee89922 100644
+--- a/datekit/business.py
++++ b/datekit/business.py
+@@ -9,10 +9,11 @@ def add_business_days(start: date, n: int) -> date:
+     Positive n moves forward, negative n moves backward, and weekends are skipped
+     in both directions. n=0 returns start unchanged.
+     """
++    step = timedelta(days=1 if n > 0 else -1)
+     current = start
+     remaining = abs(n)
+     while remaining:
+-        current += timedelta(days=1)
++        current += step
+         if current.weekday() < 5:
+             remaining -= 1
+     return current

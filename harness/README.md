@@ -9,6 +9,7 @@
 - `--run` drives a live A/B: condition A runs Claude Code headless with no skill, condition B with `skills/tdd-first-fix` installed at `.claude/skills/`. Both get the same prompt, tools, permissions, and 10-minute timeout; the resulting diff is graded with `grade()`.
 - `fixtures/task-001/` — the first eval task: a `textkit` package whose `parse_duration` drops the seconds component. It contains `project/`, `issue.md`, `hidden_tests/`, and `gold_patch.diff`. The hidden tests are never copied into an agent's workspace.
 - `fixtures/task-002/` — `statkit.median` returns the upper middle for even-length lists; the minimal fix that keeps the existing in-place sort still fails a hidden no-mutation test. `fixtures/task-003/` — `cachekit.LRUCache.get` does not refresh recency, so a just-read key is evicted. Both are gold-verified (gold passes, empty fails).
+- `fixtures/task-004/` to `task-006/` — held-out set built after `tdd-first-fix` v2 was frozen: inclusive range endpoints (`rangekit`), negative business-day direction (`datekit`), and an input-mutating `dedupe_sorted` (`listkit`). Gold-verified; no live agent runs on them yet.
 - `tests/test_grader.py` — checks the gold patch passes, an empty patch fails, added tests are allowed, changed or deleted existing tests and test-config edits are disqualified, and protected paths are refused. `--self-test` runs the same task-001 cases. CI runs the tests on every push and pull request.
 - Known confound: Claude Code's built-in skills are available in both arms equally (see SPEC.md §4.6).
 
